@@ -1,8 +1,4 @@
-#include <arpa/inet.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <sys/types.h>
-#include <string.h>
+#include "utils.h"
 
 int bind_to_port(int socket, unsigned short port){
     struct sockaddr_in my_addr;
@@ -17,4 +13,20 @@ int bind_to_port(int socket, unsigned short port){
     //Creazione socket
     ret = bind(socket, (struct sockaddr*)&my_addr, sizeof(my_addr));
     return ret;
+}
+
+char* trim(char* str){
+    int i;
+
+    //Ignora gli spazi iniziali
+    while(isspace(*str)){
+        str++;
+    }
+    //Ignora gli spazi finali e inserisci il carattere di fine stringa
+    i = strlen(str) - 1;
+    while(isspace(str[i])){
+        i--;
+    }
+    str[i+1] = '\0';
+    return str;
 }
