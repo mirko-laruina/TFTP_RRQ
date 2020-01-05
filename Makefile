@@ -11,6 +11,6 @@ client: client.o utils.o tftp_lib.o
 
 server: server.o utils.o tftp_lib.o
 	gcc -Wall server.o utils.o tftp_lib.o -o server
-	
+
 clean:
-	rm *o client server tftp_lib
+	rm *o client server

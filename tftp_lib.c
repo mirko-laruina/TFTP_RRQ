@@ -2,9 +2,7 @@
 #include <stdio.h>
 
 #include "utils.h"
-
-#define RRQ_TYPE 0x01
-#define WRQ_TYPE 0x02
+#include "tftp_lib.h"
 
 int tftp_send_rrq(int sd, char* file, char* mode, struct sockaddr_in addr){
     unsigned int len, txlen;
@@ -38,10 +36,17 @@ int tftp_send_rrq(int sd, char* file, char* mode, struct sockaddr_in addr){
     txlen = sendto(sd, buffer, len, 0, (struct sockaddr*)&addr, sizeof(addr));
     if(txlen != len){
         //Messaggio non inviato correttamente
-        perror("Errore nell'invio della richiesta: ");
+        perror("Errore nell'invio della richiesta");
         return -1;
     }
 
     free(buffer);
     return 0;
+}
+
+int tftp_get_type(char* buff, int len){
+    if(len > 2){
+        return ntohs(*((uint16_t*)buff));
+    }
+    return -1;
 }

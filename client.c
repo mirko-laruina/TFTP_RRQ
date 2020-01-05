@@ -47,7 +47,7 @@ void start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
     //Apriamo il socket UDP
     sd = socket(AF_INET, SOCK_DGRAM, 0);
     if(sd < 0){
-        perror("Errore nella creazione del socket: ");
+        perror("Errore nella creazione del socket");
     }
 
     printf("Richiesta file %s al server in corso.\n", sv_file);
