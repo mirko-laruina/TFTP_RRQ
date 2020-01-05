@@ -5,7 +5,7 @@
 
 char* tx_mode;
 
-int print_help(){
+void print_help(){
     printf("Sono disponibili i seguenti comandi:\n");
     printf("!help --> mostra l'elenco dei comandi disponibili\n");
     printf("!mode {txt|bin} --> imposta il modo di trasferimento ");
@@ -15,7 +15,7 @@ int print_help(){
     printf("!quit --> termina il client\n");
 }
 
-int change_tx_mode(char* mode){
+void change_tx_mode(char* mode){
     if(mode == NULL){
         printf("Specificare un modo di trasferimento.\nDisponibili bin e txt\n");
     } else if(strcmp(mode, "bin") == 0){

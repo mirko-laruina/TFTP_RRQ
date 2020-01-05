@@ -4,8 +4,6 @@
 
 int start_ul(struct sockaddr_in* cl_addr, char* filename, char* moden){
     int sd, status;
-    struct sockaddr_in tmp_addr;
-    unsigned int addrlen;
 
     sd = socket(AF_INET, SOCK_DGRAM, 0);
     if(sd < 0){
@@ -23,12 +21,14 @@ int start_ul(struct sockaddr_in* cl_addr, char* filename, char* moden){
     if(status < 0){
         return -1;
     }
-    close(sd); 
+    close(sd);
+    return 0;
 }
 
 int main(int argc, char** argv){
-    int sd, status, sv_port, addrlen, pktlen;
-    int req_type, pid, min_len;
+    int sd, status, sv_port, pktlen;
+    unsigned int addrlen;
+    int req_type, pid;
     char *path;
     char buf[TFTP_MAX_LENGTH];
     struct sockaddr_in cl_addr;

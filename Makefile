@@ -1,18 +1,35 @@
-GCC_OPT = -Wall -g
+BUILD_DIR := build
+SRC_DIR := src
+OBJ_DIR := obj
+FLAGS := -Wall
+COMMON_DEP = $(SRC_DIR)/tftp_lib.c $(SRC_DIR)/utils.c
+COMMON_DEP_O = $(OBJ_DIR)/tftp_lib.o $(OBJ_DIR)/utils.o
+COMMON_H = $(SRC_DIR)/tftp_lib.h $(SRC_DIR)/utils.h
 
-all: tftp_client tftp_server
+all: dir $(BUILD_DIR)/tftp_client $(BUILD_DIR)/tftp_server
 
-utils.o: utils.c
-	gcc $(GCC_OPT) -c utils.c -o utils.o
+$(OBJ_DIR)/tftp_lib.o: $(SRC_DIR)/tftp_lib.c $(COMMON_H)
+	gcc $(FLAGS) -c $(SRC_DIR)/tftp_lib.c -o $(OBJ_DIR)/tftp_lib.o
 
-tftp_lib.o: tftp_lib.c
-	gcc $(GCC_OPT)  -c tftp_lib.c -o tftp_lib.o
+$(OBJ_DIR)/utils.o: $(SRC_DIR)/utils.c $(SRC_DIR)/utils.c
+	gcc $(FLAGS) -c $(SRC_DIR)/utils.c -o $(OBJ_DIR)/utils.o
 
-tftp_client: tftp_client.o utils.o tftp_lib.o
-	gcc $(GCC_OPT) tftp_client.o utils.o tftp_lib.o -o tftp_client
+$(OBJ_DIR)/tftp_server.o: $(SRC_DIR)/tftp_server.c $(COMMON_H)
+	gcc $(FLAGS) -c $(SRC_DIR)/tftp_server.c -o $(OBJ_DIR)/tftp_server.o
 
-tftp_server: tftp_server.o utils.o tftp_lib.o
-	gcc $(GCC_OPT) tftp_server.o utils.o tftp_lib.o -o tftp_server
+$(OBJ_DIR)/tftp_client.o: $(SRC_DIR)/tftp_client.c $(COMMON_H)
+	gcc $(FLAGS) -c $(SRC_DIR)/tftp_client.c -o $(OBJ_DIR)/tftp_client.o
+
+$(BUILD_DIR)/tftp_client: $(OBJ_DIR)/tftp_client.o $(COMMON_DEP_O)
+	gcc $(FLAGS) $(OBJ_DIR)/tftp_client.o $(COMMON_DEP_O)
+
+$(BUILD_DIR)/tftp_server: $(OBJ_DIR)/tftp_server.o $(COMMON_DEP_O)
+	gcc $(FLAGS) $(OBJ_DIR)/tftp_server.o $(COMMON_DEP_O)
+
+
+dir:
+	mkdir -p $(BUILD_DIR) $(SRC_DIR) $(OBJ_DIR)
 
 clean:
-	rm *o tftp_client tftp_server
+	rm $(OBJ_DIR)/*.o
+	rm -r $(BUILD_DIR)
