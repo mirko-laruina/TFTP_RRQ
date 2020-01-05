@@ -1,18 +1,18 @@
-GCCOPT = -Wall -g
+GCC_OPT = -Wall -g
 
-all: client server
+all: tftp_client tftp_server
 
 utils.o: utils.c
-	gcc $(GCCOPT) -c utils.c -o utils.o
+	gcc $(GCC_OPT) -c utils.c -o utils.o
 
 tftp_lib.o: tftp_lib.c
-	gcc $(GCCOPT)  -c tftp_lib.c -o tftp_lib.o
+	gcc $(GCC_OPT)  -c tftp_lib.c -o tftp_lib.o
 
-client: client.o utils.o tftp_lib.o
-	gcc $(GCCOPT) client.o utils.o tftp_lib.o -o client
+tftp_client: tftp_client.o utils.o tftp_lib.o
+	gcc $(GCC_OPT) tftp_client.o utils.o tftp_lib.o -o tftp_client
 
-server: server.o utils.o tftp_lib.o
-	gcc $(GCCOPT) server.o utils.o tftp_lib.o -o server
+tftp_server: tftp_server.o utils.o tftp_lib.o
+	gcc $(GCC_OPT) tftp_server.o utils.o tftp_lib.o -o tftp_server
 
 clean:
-	rm *o client server
+	rm *o tftp_client tftp_server

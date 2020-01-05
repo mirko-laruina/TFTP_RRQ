@@ -8,7 +8,7 @@ int tftp_send_rrq(int sd, char* file, char* mode, struct sockaddr_in addr){
     unsigned int len, txlen;
     char* buffer, *buf_ptr;
 
-    uint16_t opcode = RRQ_TYPE;    
+    uint16_t opcode = TFTP_RRQ_TYPE;    
 
     //Calcoliamo la lunghezza del messaggio
     len = sizeof(opcode) + strlen(file) + 2 + strlen(mode) + 2;
@@ -95,7 +95,7 @@ int tftp_send_data(int sd, char* data, int size, int seq_n, struct sockaddr_in* 
     char* pkt_ptr = pkt;
     int sent_bytes;
 
-    *((uint16_t*)pkt_ptr) = htons(DATA_TYPE);
+    *((uint16_t*)pkt_ptr) = htons(TFTP_DATA_TYPE);
     pkt_ptr += 2;
     *((uint16_t*)pkt_ptr) = htons((uint16_t) seq_n);
     pkt_ptr += 2;
@@ -122,9 +122,9 @@ int tftp_send_file(int sd, char* filename, char* moden, struct sockaddr_in* addr
     int status;
     uint16_t block_n = 0;
 
-    if(strcmp(moden, TX_TXT_MODE) == 0){
+    if(strcmp(moden, TFTP_TX_TXT_MODE) == 0){
         bin = 0;
-    } else if (strcmp(moden, TX_BIN_MODE) == 0){
+    } else if (strcmp(moden, TFTP_TX_BIN_MODE) == 0){
         bin = 1;
     } else {
         logit("Modo usato sconosciuto.\n");
@@ -149,6 +149,7 @@ int tftp_send_file(int sd, char* filename, char* moden, struct sockaddr_in* addr
 
         //Iteriamo su tutto il file char a char
         prevc = '\0';
+        eflag = 0;
         while( !eflag && (c = (char) fgetc(fptr_temp)) != EOF){
             //CR -> \r -> \r\0
             if(c == '\r'){
@@ -183,7 +184,6 @@ int tftp_send_file(int sd, char* filename, char* moden, struct sockaddr_in* addr
         fclose(fptr);
         fclose(fptr_temp);
         fptr = fopen(tmpfile, "r");
-        free(tmpfile);
     }
 
     if(fptr == NULL){
@@ -213,7 +213,10 @@ int tftp_send_file(int sd, char* filename, char* moden, struct sockaddr_in* addr
     while (read_bytes == TFTP_MAX_DATA_BLOCK);
 
 
-
+    if(!bin){
+        remove(tmpfile);
+        free(tmpfile);
+    }
     fclose(fptr);
     return 0;
 }
@@ -222,7 +225,7 @@ int tftp_unpack_data(char* pkt, int pkt_size,
                      char* data, int data_size,
                      int* block_n)
 {
-    if(pkt_size < 4 || ntohs(*((uint16_t*)pkt)) != DATA_TYPE ){
+    if(pkt_size < 4 || ntohs(*((uint16_t*)pkt)) != TFTP_DATA_TYPE ){
         logit("Ricevuto un pacchetto non valido.\n");
         return -1;
     }

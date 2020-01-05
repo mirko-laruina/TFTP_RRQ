@@ -1,7 +1,3 @@
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <unistd.h>
 #include <libgen.h>
 #include "utils.h"
 #include "tftp_lib.h"
@@ -119,7 +115,7 @@ int main(int argc, char** argv){
 
                 logit("File locale: %s\n", realfile);
 
-                if(strcmp(moden, TX_TXT_MODE) != 0 && strcmp(moden, TX_BIN_MODE) != 0){
+                if(strcmp(moden, TFTP_TX_TXT_MODE) != 0 && strcmp(moden, TFTP_TX_BIN_MODE) != 0){
                     logit("Modo specificato non supportato: %s", moden);
                     return -1;
                 }
