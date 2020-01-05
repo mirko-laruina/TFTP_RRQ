@@ -32,11 +32,22 @@ int change_tx_mode(char* mode){
     }
 }
 
-void start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
-    struct sockaddr_in sv_addr;
-    int addrlen;
+void handle_error(char* pkt, int pkt_length){
+    char msg[TFTP_MAX_ERR_MSG_LENGTH];
+    int ecode;
+
+    if(!tftp_unpack_error(pkt, pkt_length, msg, TFTP_MAX_ERR_MSG_LENGTH, &ecode)){
+        printf("Codice di errore: %d.\n", ecode);
+        printf(msg);
+    }
+}
+
+int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
+    struct sockaddr_in sv_addr, csv_addr;
+    unsigned int csv_addrlen;
     char buffer[TFTP_MAX_DATA_PKT];
-    int sd, ret;
+    char data[TFTP_MAX_DATA_PKT];
+    int sd, ret, block_n, read_bytes, pkt_type;
 
     //Inizializzazione
 
@@ -52,22 +63,46 @@ void start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
         perror("Errore nella creazione del socket");
     }
 
+    ret = bind_to_port(sd, 0);
+    if(ret < 0){
+        return -1;
+    }
+
     printf("Richiesta file %s al server in corso.\n", sv_file);
 
     //Mandiamo l'RRQ per il file sv_file tramite il socket sd
     ret = tftp_send_rrq(sd, sv_file, tx_mode, sv_addr);
     if(ret < 0){
         //Errore gia' stampato dalla send_rrq
-        return;
+        return -1;
     }
 
     do{
-        ret = recvfrom(sd, buffer, TFTP_MAX_DATA_PKT, 0, (struct sockaddr*)&sv_addr, &addrlen);
-        printf("%d\n", ret);
-    }
-    while (ret == TFTP_MAX_DATA_PKT);
+        csv_addrlen = sizeof(csv_addr);
+        ret = recvfrom(sd, buffer, TFTP_MAX_DATA_PKT, 0, (struct sockaddr*)&csv_addr, &csv_addrlen);
+        pkt_type = tftp_get_type(buffer, ret);
 
-    return;
+        if (pkt_type == DATA_TYPE){
+            read_bytes = tftp_unpack_data(buffer, ret, data, TFTP_MAX_DATA_PKT, &block_n);
+            if(read_bytes < 0){
+                return -1;
+            }
+            ret = tftp_send_ack(sd, block_n, &csv_addr);
+            if(ret < 0){
+                logit("Errore nell'invio dell'ACK per il pacchetto %d.\n", block_n);
+                return -1;
+            }
+            logit("Pacchetto %d ricevuto e ACKed.\n", block_n);
+        } else if (pkt_type == TFTP_ERROR_TYPE){
+            handle_error(buffer, ret);
+            return -1;
+        } else {
+            logit("Ricevuto un pacchetto di tipo non atteso: ignoro");
+        }
+    }
+    while (read_bytes == TFTP_MAX_DATA_BLOCK);
+
+    return 0;
 }
 
 int main(int argc, char** argv){

@@ -8,6 +8,8 @@
 
 int start_ul(struct sockaddr_in* cl_addr, char* filename, char* moden){
     int sd, status;
+    struct sockaddr_in tmp_addr;
+    unsigned int addrlen;
 
     sd = socket(AF_INET, SOCK_DGRAM, 0);
     if(sd < 0){
@@ -20,7 +22,7 @@ int start_ul(struct sockaddr_in* cl_addr, char* filename, char* moden){
         logit("Errore nel binding.\n");
         return -1;
     }
-
+    
     status = tftp_send_file(sd, filename, moden, cl_addr);
     if(status < 0){
         return -1;
@@ -100,6 +102,7 @@ int main(int argc, char** argv){
                 realfile = realpath(filen, NULL);
                 if(realfile == NULL){
                     logit("File locale non esistente: %s\n", filen);
+                    tftp_send_error(sd, TFTP_NOT_FOUND, "File non trovato.\n", &cl_addr);
                     return -1;
                 }
                 dir = strdup(realfile);
@@ -110,6 +113,7 @@ int main(int argc, char** argv){
                     logit("!!!Tentativo di intrusione!!!\n");
                     logit("Accesso negato al file richiesto: %s\n", realfile);
                     logit("Percorso consentito: %s\n", path);
+                    tftp_send_error(sd, TFTP_ACCESS_VIOLATION, "Accesso negato.\n", &cl_addr);
                     return -1;
                 }
 
@@ -127,10 +131,12 @@ int main(int argc, char** argv){
                 free(dir);
             }
         } else {
-            logit("Richiesta TFTP sconosciuta.\n");
+            logit("Richiesta TFTP sconosciuta: %d.\n", req_type);
+            tftp_send_error(sd, TFTP_ILLEGAL_OP, "Operazione non permessa.\n", &cl_addr);
         }
     }
 
     free(path);
+    close(sd);
     return 0;
 }

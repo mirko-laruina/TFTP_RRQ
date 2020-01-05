@@ -105,6 +105,7 @@ int tftp_send_data(int sd, char* data, int size, int seq_n, struct sockaddr_in* 
     sent_bytes = sendto(sd, pkt, size+TFTP_DATA_HEADER_SIZE, 0, (struct sockaddr*)addr, sizeof(*addr));
 
     if(sent_bytes != size+TFTP_DATA_HEADER_SIZE){
+        printf("Here %d, %d", sent_bytes, size);
         return -1;
     }
     return 0;
@@ -115,8 +116,10 @@ int tftp_send_file(int sd, char* filename, char* moden, struct sockaddr_in* addr
     char* tmpfile;
     char c, prevc, nextc;
     char block[TFTP_MAX_DATA_BLOCK];
+    char ack_pkt[TFTP_ACK_SIZE];
     int eflag = 0;
-    int bin, read_bytes;
+    int bin, read_bytes, rcv_bytes, acked_n;
+    int status;
     uint16_t block_n = 0;
 
     if(strcmp(moden, TX_TXT_MODE) == 0){
@@ -194,7 +197,18 @@ int tftp_send_file(int sd, char* filename, char* moden, struct sockaddr_in* addr
             logit("Errore nel trasferimento.\n");
             return -1;
         }
-        block_n += 1;     
+        
+        rcv_bytes = recvfrom(sd, ack_pkt, TFTP_ACK_SIZE, 0, NULL, NULL);
+        status = tftp_unpack_ack(ack_pkt, rcv_bytes, &acked_n);
+        if(status < 0){
+            return -1;
+        }
+        if(acked_n != block_n){
+            logit("ACK ricevuto per %d, atteso per %d.\n", acked_n, block_n);
+            return -1;
+        }
+        logit("ACK ricevuto per %d.\n", acked_n);
+        block_n += 1;
     }
     while (read_bytes == TFTP_MAX_DATA_BLOCK);
 
@@ -204,11 +218,105 @@ int tftp_send_file(int sd, char* filename, char* moden, struct sockaddr_in* addr
     return 0;
 }
 
+int tftp_unpack_data(char* pkt, int pkt_size,
+                     char* data, int data_size,
+                     int* block_n)
+{
+    if(pkt_size < 4 || ntohs(*((uint16_t*)pkt)) != DATA_TYPE ){
+        logit("Ricevuto un pacchetto non valido.\n");
+        return -1;
+    }
+    char* ptr = pkt+2;
+    *block_n = ntohs(*((uint16_t*)ptr));
+    ptr += 2;
+
+    if(pkt_size-4 > data_size){
+        logit("Buffer insufficiente per il pacchetto ricevuto.\n");
+        return -1;
+    }
+    memcpy(data, ptr, pkt_size-4);
+    return pkt_size-4;
+}
+
 int tftp_send_ack(int sd, int seq_n, struct sockaddr_in* addr){
+    int tx;
     char pkt[TFTP_ACK_SIZE];
     char* ptr = pkt;
     *((uint16_t*)ptr) = htons(TFTP_ACK_TYPE);
     ptr+=2;
-    *((uint16_t*)ptr) = htons(seq_n);
+    *((uint16_t*)ptr) = htons((uint16_t)seq_n);
+
+    tx = sendto(sd, pkt, TFTP_ACK_SIZE, 0, (struct sockaddr*)addr, sizeof(*addr));
+    if(tx != TFTP_ACK_SIZE){
+        perror("Error");
+        return -1;
+    }
+    return 0;
+}
+
+int tftp_unpack_ack(char* pkt, int pkt_size, int* seq_n){
+    char* ptr = pkt;
+    if(pkt_size < 4 || ntohs(*((uint16_t*)ptr)) != TFTP_ACK_TYPE ){
+        logit("Ricevuto un pacchetto non valido.\n");
+        return -1;
+    }
+    ptr += 2;
+    *seq_n = ntohs(*((uint16_t*)ptr));
+    return 0;
+}
+
+int tftp_send_error(int sd, int error_code,
+                    char* error_msg,
+                    struct sockaddr_in* addr)
+{
+    int len, txed;
+    char* pkt, *ptr;
+
+    len = 2 + 2 + strlen(error_msg) + 1 + 1;
+    pkt = malloc(len);
+    if(pkt < 0){
+        return -1;
+    }
+    memset(pkt, 0, len);
+    ptr = pkt;
+    
+    *((uint16_t*)ptr) = htons(TFTP_ERROR_TYPE);
+    ptr += 2;
+    *((uint16_t*)ptr) = (uint16_t) htons(error_code);
+    ptr += 2;
+    
+    strcpy(ptr, error_msg);
+    ptr += strlen(error_msg) + 1;
+
+    txed = sendto(sd, pkt, len, 0, (struct sockaddr*)addr, sizeof(*addr));
+    if(txed != len){
+        return -1;
+    }
+
+    free(pkt);
+    return 0;
+}
+
+int tftp_unpack_error(char* pkt, int pkt_len,
+                      char* msg, int msg_len,
+                      int* error_code)
+{
+    int rcv_msg_len;
+    char* ptr = pkt;
+    if(pkt_len < 4 || *((uint16_t*)pkt) != ntohs(TFTP_ERROR_TYPE)){
+        logit("Ricevuto pacchetto non valido.\n");
+        return -1;
+    }
+
+    ptr += 2;
+    *error_code = ntohs(*((uint16_t*)ptr));
+    ptr += 2;
+
+    rcv_msg_len = strlen(ptr);
+    if(rcv_msg_len > msg_len){
+        logit("Messaggio ricevuto troppo lungo per essere salvato.\n");
+        return -1;
+    }
+    strcpy(msg, ptr);
     return 0;
 }

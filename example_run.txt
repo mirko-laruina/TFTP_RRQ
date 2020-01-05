@@ -1,2 +1,3 @@
 !mode txt
 !get test a
+!get test2 a
