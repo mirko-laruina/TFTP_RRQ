@@ -2,18 +2,20 @@
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <libgen.h>
 #include "utils.h"
 #include "tftp_lib.h"
 
 int main(int argc, char** argv){
     int sd, status, sv_port, addrlen, pktlen;
-    int req_type, pid;
+    int req_type, pid, min_len;
     char *path;
     char buf[TFTP_MAX_LENGTH];
     struct sockaddr_in cl_addr;
     char cl_ip[INET_ADDRSTRLEN];
     char filen[TFTP_MAX_FILE_LENGTH];
     char moden[TFTP_MODE_LENGTH];
+    char* realfile, *dir;
     
     log_pid = 0;
 
@@ -64,6 +66,7 @@ int main(int argc, char** argv){
             } else {
                 log_pid = getpid();
                 logit("Inizio gestione della richiesta.\n");
+
                 //Estraimo il file (e modo) richiesto e controlliamo che esista
                 status = tftp_unpack_rrq(buf, pktlen,
                                 filen, TFTP_MAX_FILE_LENGTH,
@@ -72,6 +75,32 @@ int main(int argc, char** argv){
                     logit("Pacchetto RRQ non valido.\n");
                     return -1;
                 }
+                realfile = realpath(filen, NULL);
+                if(realfile == NULL){
+                    logit("File locale non esistente: %s\n", filen);
+                    return -1;
+                }
+                dir = strdup(realfile);
+                dir = dirname(dir);
+                if(strlen(dir) < strlen(path)
+                    || strncmp(dir, path, strlen(path)) != 0
+                    || dir[strlen(path)] != '\0'){
+                    logit("!!!Tentativo di intrusione!!!\n");
+                    logit("Accesso negato al file richiesto: %s\n", realfile);
+                    logit("Percorso consentito: %s\n", path);
+                    return -1;
+                }
+
+                logit("File locale: %s\n", realfile);
+
+                if(strcmp(moden, TX_TXT_MODE) != 0 && strcmp(moden, TX_BIN_MODE) != 0){
+                    logit("Modo specificato non supportato: %s", moden);
+                    return -1;
+                }
+
+                fflush(stdout);
+                free(realfile);
+                free(dir);
             }
         } else {
             logit("Richiesta TFTP sconosciuta.\n");

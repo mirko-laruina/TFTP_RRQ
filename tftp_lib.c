@@ -56,15 +56,36 @@ int tftp_unpack_rrq(char* buf, int buf_len,
                     char* mode, int mode_len)
 {
     char* curr_field = buf;
-    int offset = 0;
+    int field_len;
 
     //Jump type field
     curr_field += 2;
 
     //Extract filename
-    if(strlen(curr_field) > file_len){
+    field_len = strlen(curr_field);
+    if(field_len > file_len || curr_field+field_len > buf+buf_len){
         logit("Il nome del file e' troppo lungo: %s\n", curr_field);
+        return -1;
     }
     logit("File richiesto: %s\n", curr_field);
-    return 1;
+    strcpy(file, curr_field);
+    curr_field += field_len+1;
+
+    //Extract mode
+    field_len = strlen(curr_field);
+    if(field_len > mode_len || curr_field+field_len > buf+buf_len){
+        logit("Il modo specificato e' troppo lungo: %s\n", curr_field);
+        return -1;
+    }
+    logit("Specificato modo: %s\n", curr_field);
+    strcpy(mode, curr_field);
+
+    curr_field += field_len+1;
+    if(curr_field == buf+buf_len){
+        logit("Pacchetto RRQ valido.\n");
+    } else {
+        logit("Pacchetto lungo %d invece di %d", curr_field-buf, buf_len);
+        return -1;
+    }
+    return 0;
 }
