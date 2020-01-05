@@ -21,10 +21,10 @@ $(OBJ_DIR)/tftp_client.o: $(SRC_DIR)/tftp_client.c $(COMMON_H)
 	gcc $(FLAGS) -c $(SRC_DIR)/tftp_client.c -o $(OBJ_DIR)/tftp_client.o
 
 $(BUILD_DIR)/tftp_client: $(OBJ_DIR)/tftp_client.o $(COMMON_DEP_O)
-	gcc $(FLAGS) $(OBJ_DIR)/tftp_client.o $(COMMON_DEP_O)
+	gcc $(FLAGS) $(OBJ_DIR)/tftp_client.o $(COMMON_DEP_O) -o $(BUILD_DIR)/tftp_client
 
 $(BUILD_DIR)/tftp_server: $(OBJ_DIR)/tftp_server.o $(COMMON_DEP_O)
-	gcc $(FLAGS) $(OBJ_DIR)/tftp_server.o $(COMMON_DEP_O)
+	gcc $(FLAGS) $(OBJ_DIR)/tftp_server.o $(COMMON_DEP_O) -o $(BUILD_DIR)/tftp_server
 
 
 dir:
