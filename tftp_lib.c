@@ -8,7 +8,7 @@ int tftp_send_rrq(int sd, char* file, char* mode, struct sockaddr_in addr){
     unsigned int len, txlen;
     char* buffer, *buf_ptr;
 
-    uint16_t opcode = RRQ_TYPE;
+    uint16_t opcode = RRQ_TYPE;    
 
     //Calcoliamo la lunghezza del messaggio
     len = sizeof(opcode) + strlen(file) + 1 + strlen(mode) + 1;
@@ -18,7 +18,7 @@ int tftp_send_rrq(int sd, char* file, char* mode, struct sockaddr_in addr){
         printf("Errore nella creazione della richiesta.\n");
         return -1;
     }
-    memset(buffer, 0, len*sizeof(buffer));
+    memset(buffer, 0, len);
     buf_ptr = buffer;
 
     //Costruiamo il messaggio
@@ -49,4 +49,22 @@ int tftp_get_type(char* buff, int len){
         return ntohs(*((uint16_t*)buff));
     }
     return -1;
+}
+
+int tftp_unpack_rrq(char* buf, int buf_len,
+                    char* file, int file_len,
+                    char* mode, int mode_len)
+{
+    char* curr_field = buf;
+    int offset = 0;
+
+    //Jump type field
+    curr_field += 2;
+
+    //Extract filename
+    if(strlen(curr_field) > file_len){
+        logit("Il nome del file e' troppo lungo: %s\n", curr_field);
+    }
+    logit("File richiesto: %s\n", curr_field);
+    return 1;
 }

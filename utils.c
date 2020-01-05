@@ -1,5 +1,19 @@
 #include "utils.h"
 
+void logit(char* s, ... ){
+
+    if(log_pid == 0){
+        printf("[MAIN] ");
+    } else {
+        printf("[%d] ", log_pid);
+    }
+
+    va_list args;
+    va_start(args, s);
+    vprintf(s, args);
+    va_end(args);
+}
+
 int bind_to_port(int socket, unsigned short port){
     struct sockaddr_in my_addr;
     int ret;

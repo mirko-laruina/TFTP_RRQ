@@ -21,10 +21,10 @@ int print_help(){
 int change_tx_mode(char* mode){
     if(mode == NULL){
         printf("Specificare un modo di trasferimento.\nDisponibili bin e txt\n");
-    } else if(strcmp(mode, TX_BIN_MODE) == 0){
+    } else if(strcmp(mode, "bin") == 0){
         tx_mode = TX_BIN_MODE;
         printf("Modo di trasferimento binario configurato\n");
-    } else if(strcmp(mode, TX_TXT_MODE) == 0){
+    } else if(strcmp(mode, "txt") == 0){
         tx_mode = TX_TXT_MODE;
         printf("Modo di trasferimento testuale configurato\n");
     } else {

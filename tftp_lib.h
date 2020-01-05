@@ -4,13 +4,15 @@
 #define DEFAULT_IP "127.0.0.1"
 #define DEFAULT_PORT 12345
 
-#define TX_BIN_MODE "bin"
-#define TX_TXT_MODE "txt"
+#define TX_BIN_MODE "netascii"
+#define TX_TXT_MODE "octet"
+#define TFTP_MODE_LENGTH 9
 
 #define RRQ_TYPE 0x01
 #define WRQ_TYPE 0x02
 
-#define MAX_LENGTH 1024
+#define TFTP_MAX_LENGTH 1024
+#define TFTP_MAX_FILE_LENGTH 1011
 
 #include <arpa/inet.h>
 #include <sys/socket.h>
@@ -19,6 +21,10 @@
 
 /* Send RRQ package */
 int tftp_send_rrq(int sd, char* file, char* mode, struct sockaddr_in addr);
+
 int tftp_get_type(char* buff, int len);
+
+/* Writes filename and mode, respecting the sizes of the buffer */
+int tftp_unpack_rrq(char* buf, int buf_len, char* file, int file_len, char* mode, int mode_len);
 
 #endif
