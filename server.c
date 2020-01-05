@@ -4,8 +4,7 @@
 #include "utils.h"
 
 
-int main(){
-    
+int main(int argc, char* argv){
     int ret, sd, len;
     unsigned short port = 12345;
     char buf[512];

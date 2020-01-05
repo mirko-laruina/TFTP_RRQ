@@ -2,14 +2,9 @@
 #include <string.h>
 #include <stdio.h>
 #include "utils.h"
+#include "tftp_lib.h"
 
-#define BUFFER_SIZE 512
 #define CMDLINE_BUFFER_SIZE 100
-#define DEFAULT_IP "127.0.0.1"
-#define DEFAULT_PORT 12345
-
-#define TX_BIN_MODE "bin"
-#define TX_TXT_MODE "txt"
 
 char* tx_mode;
 
@@ -37,24 +32,46 @@ int change_tx_mode(char* mode){
     }
 }
 
-void start_dl(char* sv_file, char* cl_file){
+void start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
+    struct sockaddr_in sv_addr;
+    int sd, ret;
+
+    //Inizializzazione
+
+    //Scriviamo l'indirizzo del server
+    memset(&sv_addr, 0, sizeof(sv_addr));
+    sv_addr.sin_family = AF_INET;
+    sv_addr.sin_port = htons(sv_port);
+    inet_pton(AF_INET, sv_ip, &sv_addr.sin_addr);
+
+    //Apriamo il socket UDP
+    sd = socket(AF_INET, SOCK_DGRAM, 0);
+    if(sd < 0){
+        perror("Errore nella creazione del socket: ");
+    }
+
     printf("Richiesta file %s al server in corso.\n", sv_file);
+
+    //Mandiamo l'RRQ per il file sv_file tramite il socket sd
+    ret = tftp_send_rrq(sd, sv_file, tx_mode, sv_addr);
+    if(ret < 0){
+        //Errore gia' stampato dalla send_rrq
+        return;
+    }
+
+    return;
 }
 
 int main(int argc, char** argv){
-    int ret, sd, sv_port;
+    int sv_port;
     char* sv_ip;
     char cmdline_buf[CMDLINE_BUFFER_SIZE];
     char* cmdline, *cmd_ptr;
     char* sv_file, *cl_file;
-    struct sockaddr_in sv_addr;
     int exit = 0;
     tx_mode = TX_BIN_MODE;
 
-    char* cmd;
-    char buffer[] = "Ciao000";
-
-    //Impostiamo l'addr del server
+    //Impostiamo ip e porta del server
     if(argc < 3){
         printf("Parametri del server non specificati\n");
         sv_ip = DEFAULT_IP;
@@ -63,11 +80,7 @@ int main(int argc, char** argv){
         sv_ip = argv[1];
         sv_port = atoi(argv[2]);
     }
-    printf("Uso %s:%d\n", sv_ip, sv_port);
-    memset(&sv_addr, 0, sizeof(sv_addr));
-    sv_addr.sin_family = AF_INET;
-    sv_addr.sin_port = htons(sv_port);
-    inet_pton(AF_INET, sv_ip, &sv_addr.sin_addr);
+    printf("Server configurato con indirizzo %s:%d\n", sv_ip, sv_port);
 
     //Avviamo la modalita' interattiva
     while(!exit){
@@ -104,30 +117,13 @@ int main(int argc, char** argv){
                     continue;
                 }
 
-                start_dl(sv_file, cl_file);
-                               
+                start_dl(sv_file, cl_file, sv_ip, sv_port);
+
             } else {
                 printf("Comando non riconosciuto.\n");
                 printf("Digita !help per la lista dei comandi disponibili.\n");
             }
         }
-    }
-
-    return 0;
-
-    sd = socket(AF_INET, SOCK_DGRAM, 0);
-    if(sd > 0){
-        printf("Socket creato con successo\n");
-    } else {
-        printf("Errore nella creazione del socket\n");
-    }
-
-    ret = sendto(sd, buffer, sizeof(buffer), 0,
-            (struct sockaddr*)&sv_addr, sizeof(sv_addr));
-    if(ret < 0){
-        perror("Errore: ");
-    } else {
-        printf("%d", ret);
     }
 
     return 0;

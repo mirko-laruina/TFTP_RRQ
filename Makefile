@@ -3,14 +3,14 @@ all: client server
 utils.o: utils.c
 	gcc -Wall -c utils.c -o utils.o
 
-client: client.o utils.o
-	gcc -Wall client.o utils.o -o client
+tftp_lib.o: tftp_lib.c
+	gcc -Wall -c tftp_lib.c -o tftp_lib.o
 
-server: server.o utils.o
-	gcc -Wall server.o utils.o -o server
+client: client.o utils.o tftp_lib.o
+	gcc -Wall client.o utils.o tftp_lib.o -o client
 
-lib: tftp_lib.o
-	gcc -Wall tftp_lib.o -o tftp_lib
-
+server: server.o utils.o tftp_lib.o
+	gcc -Wall server.o utils.o tftp_lib.o -o server
+	
 clean:
 	rm *o client server tftp_lib
