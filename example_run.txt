@@ -1,0 +1,2 @@
+!mode txt
+!get test a

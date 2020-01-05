@@ -34,6 +34,8 @@ int change_tx_mode(char* mode){
 
 void start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
     struct sockaddr_in sv_addr;
+    int addrlen;
+    char buffer[TFTP_MAX_DATA_PKT];
     int sd, ret;
 
     //Inizializzazione
@@ -58,6 +60,12 @@ void start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
         //Errore gia' stampato dalla send_rrq
         return;
     }
+
+    do{
+        ret = recvfrom(sd, buffer, TFTP_MAX_DATA_PKT, 0, (struct sockaddr*)&sv_addr, &addrlen);
+        printf("%d\n", ret);
+    }
+    while (ret == TFTP_MAX_DATA_PKT);
 
     return;
 }

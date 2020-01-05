@@ -6,6 +6,28 @@
 #include "utils.h"
 #include "tftp_lib.h"
 
+int start_ul(struct sockaddr_in* cl_addr, char* filename, char* moden){
+    int sd, status;
+
+    sd = socket(AF_INET, SOCK_DGRAM, 0);
+    if(sd < 0){
+        logit("Errore nella creazione del socket.\n");
+        return -1;
+    }
+    //Port 0 binds to a random port
+    status = bind_to_port(sd, 0);
+    if(status < 0){
+        logit("Errore nel binding.\n");
+        return -1;
+    }
+
+    status = tftp_send_file(sd, filename, moden, cl_addr);
+    if(status < 0){
+        return -1;
+    }
+    close(sd); 
+}
+
 int main(int argc, char** argv){
     int sd, status, sv_port, addrlen, pktlen;
     int req_type, pid, min_len;
@@ -97,6 +119,8 @@ int main(int argc, char** argv){
                     logit("Modo specificato non supportato: %s", moden);
                     return -1;
                 }
+
+                start_ul(&cl_addr, realfile, moden);
 
                 fflush(stdout);
                 free(realfile);
