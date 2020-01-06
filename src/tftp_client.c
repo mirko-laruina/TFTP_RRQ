@@ -96,9 +96,13 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
         fptr = fopen(cl_file, "w");
     } else if(strcmp(tx_mode, TFTP_TX_BIN_MODE) == 0){
         fptr = fopen(cl_file, "wb");
+    } else {
+        printf("Modo di trasferimento sconosciuto.\n");
+        return -1;
     }
-    if(fptr < 0){
+    if(fptr <= 0){
         printf("Errore nell'apertura del file.\n");
+        return -1;
     }
 
     printf("Richiesta file %s al server in corso.\n", sv_file);
@@ -107,6 +111,7 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
     ret = tftp_send_rrq(sd, sv_file, tx_mode, sv_addr);
     if(ret < 0){
         pr_err();
+        remove(cl_file);
         close(sd);
         fclose(fptr);
         return -1;
@@ -127,6 +132,7 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
             read_bytes = tftp_unpack_data(buffer, ret, data, TFTP_MAX_DATA_PKT, &block_n);
             if(read_bytes < 0){
                 pr_err();
+                remove(cl_file);
                 close(sd);
                 fclose(fptr);
                 return -1;
@@ -134,6 +140,7 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
 
             if(exp_block_n != block_n){
                 printf("Errore nel trasferimento: attesso il blocco %d, ricevuto %d.\n", exp_block_n, block_n);
+                remove(cl_file);
                 close(sd);
                 fclose(fptr);
                 return -1;
@@ -142,6 +149,7 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
             wr_bytes = fwrite(data, 1, read_bytes, fptr);
             if(wr_bytes != read_bytes){
                 printf("Errore nel salvataggio del file.\n");
+                remove(cl_file);
                 close(sd);
                 fclose(fptr);
                 return -1;
@@ -151,6 +159,7 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
 
             if(ret < 0){
                 printf("Errore nell'invio dell'ACK per il pacchetto %d.\n", block_n);
+                remove(cl_file);
                 close(sd);
                 fclose(fptr);
                 return -1;
@@ -159,6 +168,7 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
             total_blocks += 1;
         } else if (pkt_type == TFTP_ERROR_TYPE){
             handle_error(buffer, ret);
+            remove(cl_file);
             close(sd);
             fclose(fptr);
             return -1;
@@ -233,7 +243,6 @@ int main(int argc, char** argv){
                 }
 
                 wordexp(cl_file, &exp_result, 0);
-                printf("%s\n", exp_result.we_wordv[0]);
                 start_dl(sv_file, exp_result.we_wordv[0], sv_ip, sv_port);
 
             } else {
