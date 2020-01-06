@@ -44,3 +44,14 @@ char* trim(char* str){
     str[i+1] = '\0';
     return str;
 }
+
+void set_error(char* s, ...){
+    va_list args;
+    va_start(args, s);
+    vsnprintf(error_msg, MAX_ERROR_MSG_SIZE, s, args);
+    va_end(args);
+}
+
+void pr_err(){
+    printf("%s", error_msg);
+}

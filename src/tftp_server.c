@@ -53,6 +53,7 @@ int main(int argc, char** argv){
         perror("Errore nel percorso");
         return -1;
     }
+    chdir(path);
     logit("Leggo da: %s\n", path);
 
     sd = socket(AF_INET, SOCK_DGRAM, 0);

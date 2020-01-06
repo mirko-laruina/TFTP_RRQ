@@ -35,6 +35,8 @@ void handle_error(char* pkt, int pkt_length){
 
     if(!tftp_unpack_error(pkt, pkt_length, msg, TFTP_MAX_ERR_MSG_LENGTH, &ecode)){
         printf(msg);
+    } else {
+        pr_err();
     }
 }
 
@@ -100,7 +102,7 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
     //Mandiamo l'RRQ per il file sv_file tramite il socket sd
     ret = tftp_send_rrq(sd, sv_file, tx_mode, sv_addr);
     if(ret < 0){
-        //Errore gia' stampato dalla send_rrq
+        pr_err();
         return -1;
     }
 
@@ -117,6 +119,7 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
             }
             read_bytes = tftp_unpack_data(buffer, ret, data, TFTP_MAX_DATA_PKT, &block_n);
             if(read_bytes < 0){
+                pr_err();
                 return -1;
             }
 

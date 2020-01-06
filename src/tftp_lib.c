@@ -15,7 +15,7 @@ int tftp_send_rrq(int sd, char* file, char* mode, struct sockaddr_in addr){
     buffer = malloc(len);
     if(buffer == NULL){
         //Un raro caso di malloc che fallisce
-        printf("Errore nella creazione della richiesta.\n");
+        set_error("Errore nella creazione della richiesta.\n");
         return -1;
     }
     memset(buffer, 0, len);
@@ -36,7 +36,7 @@ int tftp_send_rrq(int sd, char* file, char* mode, struct sockaddr_in addr){
     txlen = sendto(sd, buffer, len, 0, (struct sockaddr*)&addr, sizeof(addr));
     if(txlen != len){
         //Messaggio non inviato correttamente
-        perror("Errore nell'invio della richiesta");
+        set_error("Errore nell'invio della richiesta");
         return -1;
     }
 
@@ -177,6 +177,7 @@ int tftp_send_file(int sd, char* filename, char* moden, struct sockaddr_in* addr
 
         if(eflag){
             logit("Errore nella scrittura del file temporaneo.\n");
+            return -1;
         } else {
             logit("File convertito con successo in netascii.\n");
         }
@@ -226,7 +227,7 @@ int tftp_unpack_data(char* pkt, int pkt_size,
                      int* block_n)
 {
     if(pkt_size < 4 || ntohs(*((uint16_t*)pkt)) != TFTP_DATA_TYPE ){
-        logit("Ricevuto un pacchetto non valido.\n");
+        set_error("Ricevuto un pacchetto non valido.\n");
         return -1;
     }
     char* ptr = pkt+2;
@@ -234,7 +235,7 @@ int tftp_unpack_data(char* pkt, int pkt_size,
     ptr += 2;
 
     if(pkt_size-4 > data_size){
-        logit("Buffer insufficiente per il pacchetto ricevuto.\n");
+        set_error("Buffer insufficiente per il pacchetto ricevuto.\n");
         return -1;
     }
     memcpy(data, ptr, pkt_size-4);
@@ -307,7 +308,7 @@ int tftp_unpack_error(char* pkt, int pkt_len,
     int rcv_msg_len;
     char* ptr = pkt;
     if(pkt_len < 4 || *((uint16_t*)pkt) != ntohs(TFTP_ERROR_TYPE)){
-        logit("Ricevuto pacchetto non valido.\n");
+        set_error("Ricevuto pacchetto non valido.\n");
         return -1;
     }
 
@@ -317,7 +318,7 @@ int tftp_unpack_error(char* pkt, int pkt_len,
 
     rcv_msg_len = strlen(ptr);
     if(rcv_msg_len > msg_len){
-        logit("Messaggio ricevuto troppo lungo per essere salvato.\n");
+        set_error("Messaggio ricevuto troppo lungo per essere salvato.\n");
         return -1;
     }
     strcpy(msg, ptr);
