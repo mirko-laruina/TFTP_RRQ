@@ -77,6 +77,7 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
         do {
             printf("> ");
             if(fgets(cmdline_buf, CMDLINE_BUFFER_SIZE, stdin) == NULL){
+                close(sd);
                 return -1;
             }
             exists_choice = trim(cmdline_buf)[0];
@@ -85,6 +86,7 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
                 break;
             } else if(exists_choice == 'N' || exists_choice == 'n') {
                 printf("Trasferimento annulato.\n");
+                close(sd);
                 return -1;
             }
         } while (printf("Scelta non valida. Si o no.\n"));
@@ -104,6 +106,8 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
     ret = tftp_send_rrq(sd, sv_file, tx_mode, sv_addr);
     if(ret < 0){
         pr_err();
+        close(sd);
+        fclose(fptr);
         return -1;
     }
 
@@ -122,16 +126,23 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
             read_bytes = tftp_unpack_data(buffer, ret, data, TFTP_MAX_DATA_PKT, &block_n);
             if(read_bytes < 0){
                 pr_err();
+                close(sd);
+                fclose(fptr);
                 return -1;
             }
 
             if(exp_block_n != block_n){
                 printf("Errore nel trasferimento: attesso il blocco %d, ricevuto %d.\n", exp_block_n, block_n);
+                close(sd);
+                fclose(fptr);
+                return -1;
             }
 
             wr_bytes = fwrite(data, 1, read_bytes, fptr);
             if(wr_bytes != read_bytes){
                 printf("Errore nel salvataggio del file.\n");
+                close(sd);
+                fclose(fptr);
                 return -1;
             }
 
@@ -139,12 +150,16 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
 
             if(ret < 0){
                 printf("Errore nell'invio dell'ACK per il pacchetto %d.\n", block_n);
+                close(sd);
+                fclose(fptr);
                 return -1;
             }
             exp_block_n += 1;
             total_blocks += 1;
         } else if (pkt_type == TFTP_ERROR_TYPE){
             handle_error(buffer, ret);
+            close(sd);
+            fclose(fptr);
             return -1;
         } else {
             printf("Ricevuto un pacchetto di tipo non atteso: ignoro");
@@ -155,6 +170,7 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
     printf("Trasferimento completato (%d/%d blocchi).\n", total_blocks, total_blocks);
     printf("Salvataggio %s completato.\n", cl_file);
 
+    close(sd);
     fclose(fptr);
     return 0;
 }

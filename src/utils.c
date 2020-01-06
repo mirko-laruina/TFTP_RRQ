@@ -55,3 +55,40 @@ void set_error(char* s, ...){
 void pr_err(){
     printf("%s", error_msg);
 }
+
+int netascii(FILE* origin_fp, FILE* dest_fp){
+    int eflag;
+    char c, nextc, prevc;
+
+    prevc = '\0';
+    eflag = 0;
+    while( !eflag && (c = (char) fgetc(origin_fp)) != EOF){
+        //CR -> \r -> \r\0
+        if(c == '\r'){
+            nextc = (char) fgetc(origin_fp);
+            if(nextc == '\0'){
+                if( putc('\r', dest_fp) == EOF || putc('\0', dest_fp) == EOF){
+                    eflag = 1;
+                }
+            } else {
+                ungetc(nextc, origin_fp);
+            }
+        } else if(c == '\n' && prevc != '\r'){
+            //LF -> CR/LF
+            if (putc('\r', dest_fp) == EOF || putc('\n', dest_fp) == EOF){
+                eflag = 1;
+            }
+        } else {
+            //Ricopiamo il carattere
+            if (putc(c, dest_fp) == EOF){
+                eflag = 1;
+            }
+        }
+        prevc = c;
+    }
+
+    if(eflag){
+        return -1;
+    }
+    return 0;
+}

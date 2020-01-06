@@ -36,7 +36,7 @@ int tftp_send_rrq(int sd, char* file, char* mode, struct sockaddr_in addr){
     txlen = sendto(sd, buffer, len, 0, (struct sockaddr*)&addr, sizeof(addr));
     if(txlen != len){
         //Messaggio non inviato correttamente
-        set_error("Errore nell'invio della richiesta");
+        set_error("Errore nell'invio della richiesta.\n");
         return -1;
     }
 
@@ -114,10 +114,8 @@ int tftp_send_data(int sd, char* data, int size, int seq_n, struct sockaddr_in* 
 int tftp_send_file(int sd, char* filename, char* moden, struct sockaddr_in* addr){
     FILE* fptr, *fptr_temp;
     char* tmpfile;
-    char c, prevc, nextc;
     char block[TFTP_MAX_DATA_BLOCK];
     char ack_pkt[TFTP_ACK_SIZE];
-    int eflag = 0;
     int bin, read_bytes, rcv_bytes;
     int status;
     uint16_t block_n = 0, acked_n;
@@ -147,35 +145,7 @@ int tftp_send_file(int sd, char* filename, char* moden, struct sockaddr_in* addr
             return -1;
         }
 
-        //Iteriamo su tutto il file char a char
-        prevc = '\0';
-        eflag = 0;
-        while( !eflag && (c = (char) fgetc(fptr_temp)) != EOF){
-            //CR -> \r -> \r\0
-            if(c == '\r'){
-                nextc = (char) fgetc(fptr_temp);
-                if(nextc == '\0'){
-                    if( putc('\r', fptr) == EOF || putc('\0', fptr) == EOF){
-                        eflag = 1;
-                    }
-                } else {
-                    ungetc(nextc, fptr_temp);
-                }
-            } else if(c == '\n' && prevc != '\r'){
-                //LF -> CR/LF
-                if (putc('\r', fptr) == EOF || putc('\n', fptr) == EOF){
-                    eflag = 1;
-                }
-            } else {
-                //Ricopiamo il carattere
-                if (putc(c, fptr) == EOF){
-                    eflag = 1;
-                }
-            }
-            prevc = c;
-        }
-
-        if(eflag){
+        if(netascii(fptr_temp, fptr) < 0){
             logit("Errore nella scrittura del file temporaneo.\n");
             return -1;
         } else {

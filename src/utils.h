@@ -42,4 +42,7 @@ void set_error(char*s, ...);
 /** Utility for error management: prints last error_msg */
 void pr_err();
 
+/** Take an input file and converts it to netascii */
+int netascii(FILE* origin_fp, FILE* dest_fp);
+
 #endif
