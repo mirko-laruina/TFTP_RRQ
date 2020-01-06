@@ -1,4 +1,4 @@
-BUILD_DIR := build
+BUILD_DIR := bin
 SRC_DIR := src
 OBJ_DIR := obj
 FLAGS := -Wall
