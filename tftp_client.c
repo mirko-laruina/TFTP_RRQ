@@ -5,7 +5,7 @@
 
 char* tx_mode;
 
-void print_help(){
+int print_help(){
     printf("Sono disponibili i seguenti comandi:\n");
     printf("!help --> mostra l'elenco dei comandi disponibili\n");
     printf("!mode {txt|bin} --> imposta il modo di trasferimento ");
@@ -15,7 +15,7 @@ void print_help(){
     printf("!quit --> termina il client\n");
 }
 
-void change_tx_mode(char* mode){
+int change_tx_mode(char* mode){
     if(mode == NULL){
         printf("Specificare un modo di trasferimento.\nDisponibili bin e txt\n");
     } else if(strcmp(mode, "bin") == 0){
@@ -31,12 +31,10 @@ void change_tx_mode(char* mode){
 
 void handle_error(char* pkt, int pkt_length){
     char msg[TFTP_MAX_ERR_MSG_LENGTH];
-    uint16_t ecode;
+    int ecode;
 
     if(!tftp_unpack_error(pkt, pkt_length, msg, TFTP_MAX_ERR_MSG_LENGTH, &ecode)){
         printf(msg);
-    } else {
-        pr_err();
     }
 }
 
@@ -46,7 +44,8 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
     char buffer[TFTP_MAX_DATA_PKT];
     char data[TFTP_MAX_DATA_PKT];
     int sd, ret, read_bytes, pkt_type, wr_bytes, total_blocks;
-    uint16_t exp_block_n, block_n;
+    uint16_t exp_block_n;
+    uint16_t block_n;
     int tx_started = 0;
     char exists_choice;
     char cmdline_buf[CMDLINE_BUFFER_SIZE];
@@ -103,7 +102,7 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
     //Mandiamo l'RRQ per il file sv_file tramite il socket sd
     ret = tftp_send_rrq(sd, sv_file, tx_mode, sv_addr);
     if(ret < 0){
-        pr_err();
+        //Errore gia' stampato dalla send_rrq
         return -1;
     }
 
@@ -121,7 +120,6 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
             }
             read_bytes = tftp_unpack_data(buffer, ret, data, TFTP_MAX_DATA_PKT, &block_n);
             if(read_bytes < 0){
-                pr_err();
                 return -1;
             }
 

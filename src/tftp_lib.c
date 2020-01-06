@@ -118,9 +118,9 @@ int tftp_send_file(int sd, char* filename, char* moden, struct sockaddr_in* addr
     char block[TFTP_MAX_DATA_BLOCK];
     char ack_pkt[TFTP_ACK_SIZE];
     int eflag = 0;
-    int bin, read_bytes, rcv_bytes, acked_n;
+    int bin, read_bytes, rcv_bytes;
     int status;
-    uint16_t block_n = 0;
+    uint16_t block_n = 0, acked_n;
 
     if(strcmp(moden, TFTP_TX_TXT_MODE) == 0){
         bin = 0;
@@ -224,7 +224,7 @@ int tftp_send_file(int sd, char* filename, char* moden, struct sockaddr_in* addr
 
 int tftp_unpack_data(char* pkt, int pkt_size,
                      char* data, int data_size,
-                     int* block_n)
+                     uint16_t* block_n)
 {
     if(pkt_size < 4 || ntohs(*((uint16_t*)pkt)) != TFTP_DATA_TYPE ){
         set_error("Ricevuto un pacchetto non valido.\n");
@@ -242,13 +242,13 @@ int tftp_unpack_data(char* pkt, int pkt_size,
     return pkt_size-4;
 }
 
-int tftp_send_ack(int sd, int seq_n, struct sockaddr_in* addr){
+int tftp_send_ack(int sd, uint16_t seq_n, struct sockaddr_in* addr){
     int tx;
     char pkt[TFTP_ACK_SIZE];
     char* ptr = pkt;
     *((uint16_t*)ptr) = htons(TFTP_ACK_TYPE);
     ptr+=2;
-    *((uint16_t*)ptr) = htons((uint16_t)seq_n);
+    *((uint16_t*)ptr) = htons(seq_n);
 
     tx = sendto(sd, pkt, TFTP_ACK_SIZE, 0, (struct sockaddr*)addr, sizeof(*addr));
     if(tx != TFTP_ACK_SIZE){
@@ -258,7 +258,7 @@ int tftp_send_ack(int sd, int seq_n, struct sockaddr_in* addr){
     return 0;
 }
 
-int tftp_unpack_ack(char* pkt, int pkt_size, int* seq_n){
+int tftp_unpack_ack(char* pkt, int pkt_size, uint16_t* seq_n){
     char* ptr = pkt;
     if(pkt_size < 4 || ntohs(*((uint16_t*)ptr)) != TFTP_ACK_TYPE ){
         logit("Ricevuto un pacchetto non valido.\n");
@@ -269,7 +269,7 @@ int tftp_unpack_ack(char* pkt, int pkt_size, int* seq_n){
     return 0;
 }
 
-int tftp_send_error(int sd, int error_code,
+int tftp_send_error(int sd, uint16_t error_code,
                     char* error_msg,
                     struct sockaddr_in* addr)
 {
@@ -286,7 +286,7 @@ int tftp_send_error(int sd, int error_code,
     
     *((uint16_t*)ptr) = htons(TFTP_ERROR_TYPE);
     ptr += 2;
-    *((uint16_t*)ptr) = (uint16_t) htons(error_code);
+    *((uint16_t*)ptr) = htons(error_code);
     ptr += 2;
     
     strcpy(ptr, error_msg);
@@ -303,7 +303,7 @@ int tftp_send_error(int sd, int error_code,
 
 int tftp_unpack_error(char* pkt, int pkt_len,
                       char* msg, int msg_len,
-                      int* error_code)
+                      uint16_t* error_code)
 {
     int rcv_msg_len;
     char* ptr = pkt;
