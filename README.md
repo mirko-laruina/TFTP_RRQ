@@ -14,7 +14,7 @@ The specified `port number` will be used to listen for incoming RRQ packets.
 ### Client
 The clients use an interactive mode, started by
 
-    ./tftp_server <server ip> <server port number>
+    ./tftp_client <server ip> <server port number>
 
 The possible commands are:
 
