@@ -24,7 +24,7 @@ int bind_to_port(int socket, unsigned short port){
     my_addr.sin_port = htons(port);
     my_addr.sin_addr.s_addr = htonl(INADDR_ANY);
     
-    //Creazione socket
+    //Binding socket
     ret = bind(socket, (struct sockaddr*)&my_addr, sizeof(my_addr));
     return ret;
 }

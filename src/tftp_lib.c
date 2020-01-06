@@ -135,6 +135,10 @@ int tftp_send_file(int sd, char* filename, char* moden, struct sockaddr_in* addr
         //Come descritto qui https://stackoverflow.com/questions/7101068/tftp-protocol-implementation-and-difference-between-netascii-and-octect
         //Il file deve essere adattato CR->CR/NUL e LF->CR/LF 
         fptr_temp = fopen(filename, "r");
+        if(fptr_temp == NULL){
+            logit("Impossibile aprire il file specificato.\n");
+            return -1;
+        }
         // +5 = +1(dimensione totale array) + 5 (.temp)
         tmpfile = malloc(strlen(filename)+6);
         tmpfile = strdup(filename);

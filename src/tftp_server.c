@@ -10,6 +10,8 @@ int start_ul(struct sockaddr_in* cl_addr, char* filename, char* moden){
         logit("Errore nella creazione del socket.\n");
         return -1;
     }
+    logit("Socket creato con successo.\n");
+
     //Port 0 binds to a random port
     status = bind_to_port(sd, 0);
     if(status < 0){
@@ -117,7 +119,7 @@ int main(int argc, char** argv){
                 logit("File locale: %s\n", realfile);
 
                 if(strcmp(moden, TFTP_TX_TXT_MODE) != 0 && strcmp(moden, TFTP_TX_BIN_MODE) != 0){
-                    logit("Modo specificato non supportato: %s", moden);
+                    logit("Modo specificato non supportato: %s.\n", moden);
                     return -1;
                 }
 

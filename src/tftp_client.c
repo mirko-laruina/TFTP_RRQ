@@ -68,6 +68,7 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
 
     ret = bind_to_port(sd, 0);
     if(ret < 0){
+        perror("Errore nel binding");
         return -1;
     }
 
@@ -162,7 +163,7 @@ int start_dl(char* sv_file, char* cl_file, char* sv_ip, int sv_port){
             fclose(fptr);
             return -1;
         } else {
-            printf("Ricevuto un pacchetto di tipo non atteso: ignoro");
+            printf("Ricevuto un pacchetto di tipo non atteso: ignoro.\n");
         }
     }
     while (read_bytes == TFTP_MAX_DATA_BLOCK);
