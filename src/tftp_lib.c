@@ -139,10 +139,9 @@ int tftp_send_file(int sd, char* filename, char* moden, struct sockaddr_in* addr
             logit("Impossibile aprire il file specificato.\n");
             return -1;
         }
-        // +5 = +1(dimensione totale array) + 5 (.temp)
         tmpfile = malloc(strlen(filename)+6);
         tmpfile = strdup(filename);
-        strcat(tmpfile, ".temp");
+        strcat(tmpfile, ".t");
         fptr = fopen(tmpfile, "w");
         if(fptr == NULL){
             logit("Impossibile creare il file temporaneo.\n");
