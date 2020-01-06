@@ -1,5 +1,0 @@
-!mode txt
-!get test a
-!get test2 a
-!get adasdsd fs
-!get esempio_testo.txt b.txt
