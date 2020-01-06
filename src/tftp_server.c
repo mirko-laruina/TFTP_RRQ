@@ -108,7 +108,8 @@ int main(int argc, char** argv){
                 dir = dirname(dir);
                 if(strlen(dir) < strlen(path)
                     || strncmp(dir, path, strlen(path)) != 0
-                    || dir[strlen(path)] != '\0'){
+                    || (dir[strlen(path)] != '\0'
+                    && dir[strlen(path)] != '/')){
                     logit("!!!Tentativo di intrusione!!!\n");
                     logit("Accesso negato al file richiesto: %s\n", realfile);
                     logit("Percorso consentito: %s\n", path);

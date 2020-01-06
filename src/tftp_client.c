@@ -183,6 +183,7 @@ int main(int argc, char** argv){
     char* cmdline, *cmd_ptr;
     char* sv_file, *cl_file;
     int exit = 0;
+    wordexp_t exp_result;
     tx_mode = TFTP_TX_BIN_MODE;
 
     //Impostiamo ip e porta del server
@@ -231,7 +232,9 @@ int main(int argc, char** argv){
                     continue;
                 }
 
-                start_dl(sv_file, cl_file, sv_ip, sv_port);
+                wordexp(cl_file, &exp_result, 0);
+                printf("%s\n", exp_result.we_wordv[0]);
+                start_dl(sv_file, exp_result.we_wordv[0], sv_ip, sv_port);
 
             } else {
                 printf("Comando non riconosciuto.\n");

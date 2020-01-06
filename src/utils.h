@@ -12,8 +12,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <wordexp.h>
 
 #define MAX_ERROR_MSG_SIZE 256
+#define MAX_FILE_NAME 256
 
 /** Used by the logit function, set to 0 display [MAIN], otherwise [log_pid] */
 int log_pid;
