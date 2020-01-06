@@ -21,5 +21,5 @@ The possible commands are:
     !help --> shows available commands list
     !mode {txt|bin} --> sets transfer mode, can be binary or txt
     !get filename local_name --> gets filename (if available on the server file directory) and
-        saves it as local_name (in the current client directory)
+    saves it as local_name (in the current client directory)
     !quit --> exits interactive mode
